@@ -1,0 +1,97 @@
+# Docker Compose para desenvolvimento local
+# Sobe apenas a infraestrutura (banco de dados, etc.)
+# Os microserviços rodam na IDE com hot reload
+
+version: '3.8'
+
+services:
+  # =====================================================
+  # PostgreSQL - Banco de dados
+  # =====================================================
+  # Um container com múltiplos databases (um por microserviço)
+  postgres:
+    image: postgres:16-alpine
+    container_name: techstore-postgres
+    environment:
+      POSTGRES_USER: techstore
+      POSTGRES_PASSWORD: techstore123
+      # Lista de databases que serão criados automaticamente
+      # Adicione novos databases aqui conforme criar novos serviços
+      POSTGRES_MULTIPLE_DATABASES: product_db,user_db,auth_db,inventory_db,order_db,payment_db,notification_db
+    ports:
+      - "5433:5432"
+    volumes:
+      # Persistência dos dados
+      - postgres_data:/var/lib/postgresql/data
+      # Script de inicialização que cria múltiplos databases
+      - ./docker/postgres/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U techstore"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - techstore-network
+
+  # =====================================================
+  # pgAdmin - Interface gráfica para o PostgreSQL (opcional)
+  # =====================================================
+  # Acesse em: http://localhost:5050
+  # Email: admin@techstore.com / Senha: admin123
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: techstore-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@techstore.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - techstore-network
+
+  # =====================================================
+  # Kafka + Zookeeper (descomentar quando precisar)
+  # =====================================================
+  # zookeeper:
+  #   image: confluentinc/cp-zookeeper:7.5.0
+  #   container_name: techstore-zookeeper
+  #   environment:
+  #     ZOOKEEPER_CLIENT_PORT: 2181
+  #     ZOOKEEPER_TICK_TIME: 2000
+  #   ports:
+  #     - "2181:2181"
+  #   networks:
+  #     - techstore-network
+
+  # kafka:
+  #   image: confluentinc/cp-kafka:7.5.0
+  #   container_name: techstore-kafka
+  #   depends_on:
+  #     - zookeeper
+  #   ports:
+  #     - "9092:9092"
+  #   environment:
+  #     KAFKA_BROKER_ID: 1
+  #     KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #   networks:
+  #     - techstore-network
+
+# =====================================================
+# Volumes - Persistência de dados
+# =====================================================
+volumes:
+  postgres_data:
+    driver: local
+
+# =====================================================
+# Networks - Rede interna dos containers
+# =====================================================
+networks:
+  techstore-network:
+    driver: bridge
+

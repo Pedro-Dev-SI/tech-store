@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: product-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/product_db
+    username: techstore
+    password: techstore123
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate   # IMPORTANTE: só valida, não cria tabelas
+    show-sql: true         # Mostra as queries no console (dev only)
+    properties:
+      hibernate:
+        format_sql: true   # Formata as queries bonitinho
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true   # Útil se já existe dados no banco
+
+server:
+  port: 8083
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics   # Quais endpoints expor
+  endpoint:
+    health:
+      show-details: always   # Mostra detalhes do health check
+
+logging:
+  level:
+    root: INFO
+    br.com.techstore: DEBUG   # Mais detalhes no seu código
+    org.hibernate.SQL: DEBUG  # Ver queries SQL
