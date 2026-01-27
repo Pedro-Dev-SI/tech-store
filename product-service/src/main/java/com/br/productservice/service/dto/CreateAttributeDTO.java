@@ -1,5 +1,6 @@
 package com.br.productservice.service.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,8 +15,9 @@ import lombok.ToString;
 @ToString
 public class CreateAttributeDTO {
 
-    @NotNull
+    @NotBlank
     private String name;
-    @NotNull
+
+    @NotBlank
     private String value;
 }

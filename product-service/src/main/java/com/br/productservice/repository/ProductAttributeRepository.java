@@ -15,5 +15,7 @@ public interface ProductAttributeRepository extends JpaRepository<ProductAttribu
     
     // Buscar atributos por nome (ex: todas as cores de um produto)
     List<ProductAttribute> findByProductIdAndName(UUID productId, String name);
-}
 
+    // Remove todos os atributos de um produto
+    void deleteByProductId(UUID productId);
+}

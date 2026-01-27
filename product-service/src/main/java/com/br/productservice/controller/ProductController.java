@@ -1,9 +1,15 @@
 package com.br.productservice.controller;
 
-import com.br.productservice.model.Product;
 import com.br.productservice.service.ProductService;
+import com.br.productservice.service.dto.CreateAttributeDTO;
+import com.br.productservice.service.dto.CreateImageDTO;
 import com.br.productservice.service.dto.CreateProductDTO;
+import com.br.productservice.service.dto.ProductAttributesResponse;
 import com.br.productservice.service.dto.ProductFilterDTO;
+import com.br.productservice.service.dto.ProductImageResponse;
+import com.br.productservice.service.dto.ProductResponse;
+import com.br.productservice.service.dto.UpdateProductDTO;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -11,8 +17,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -49,7 +58,7 @@ public class ProductController {
      * @return Page of products
      */
     @GetMapping()
-    public ResponseEntity<Page<Product>> listProducts(
+    public ResponseEntity<Page<ProductResponse>> listProducts(
             @RequestParam(required = false) UUID categoryId,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
@@ -85,14 +94,26 @@ public class ProductController {
         return ResponseEntity.ok().body(productService.listProducts(filter, isAdmin));
     }
 
+    /**
+     * Returns a product by id.
+     *
+     * @param id Product id
+     * @return Product response
+     */
     @GetMapping("/{id}")
-    public ResponseEntity<Product> findById(@PathVariable UUID id) {
+    public ResponseEntity<ProductResponse> findById(@PathVariable UUID id) {
         log.info("REST - Request to get a product by id: {}", id);
         return ResponseEntity.ok().body(productService.findById(id));
     }
 
+    /**
+     * Returns a product by slug.
+     *
+     * @param slug Product slug
+     * @return Product response
+     */
     @GetMapping("/slug/{slug}")
-    public ResponseEntity<Product> findBySlug(@PathVariable String slug) {
+    public ResponseEntity<ProductResponse> findBySlug(@PathVariable String slug) {
         log.info("REST - Request to get a product by slug: {}", slug);
         return ResponseEntity.ok().body(productService.findBySlug(slug));
     }
@@ -108,7 +129,7 @@ public class ProductController {
      * @return Page of products matching the search
      */
     @GetMapping("/search")
-    public ResponseEntity<Page<Product>> searchProducts(
+    public ResponseEntity<Page<ProductResponse>> searchProducts(
             @RequestParam(required = false, defaultValue = "") String q,
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "20") int size,
@@ -130,15 +151,83 @@ public class ProductController {
         Pageable pageable = PageRequest.of(page, validSize, Sort.by(direction, sortBy));
         
         // Search products
-        Page<Product> products = productService.searchProduct(q.trim(), pageable);
+        Page<ProductResponse> products = productService.searchProduct(q.trim(), pageable);
         
         return ResponseEntity.ok().body(products);
     }
 
+    /**
+     * Creates a new product.
+     *
+     * @param productDTO Product data
+     * @return Created product
+     */
     @PostMapping()
-    public ResponseEntity<Product> create(@RequestBody CreateProductDTO productDTO){
+    public ResponseEntity<ProductResponse> create(@Valid @RequestBody CreateProductDTO productDTO){
         log.info("REST - Request to create a new product with the name: {}. SKU: {}", productDTO.getName(), productDTO.getSku());
         //TODO - IMPLEMENT THE AUTH VERIFICATION (ONLY ADMIN ROLES CAN CREATE A NEW PRODUCT)
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.createNewProduct(productDTO));
+    }
+
+    /**
+     * Partially updates an existing product (PATCH semantics).
+     *
+     * @param id Product id
+     * @param productDTO Updated product data (only changed fields)
+     * @return Updated product
+     */
+    @PatchMapping("/{id}")
+    public ResponseEntity<ProductResponse> update(@PathVariable UUID id, @RequestBody UpdateProductDTO productDTO) {
+        log.info("REST - Request to update the product with id: {}", id);
+        return ResponseEntity.status(HttpStatus.OK).body(productService.updateProduct(id, productDTO));
+    }
+
+    /**
+     * Inactivate product by its id
+     *
+     * @param id Product id
+     * @return
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> inactivate(@PathVariable UUID id) {
+        log.info("REST - Request to inactivate the product with id: {}", id);
+        productService.inactivateProduct(id);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    /**
+     *
+     * @param id Product id for update
+     * @param imageDTOS list of images to be set at the Product
+     * @return list of ProductImageResponse
+     */
+    @PostMapping("/{id}/images")
+    public ResponseEntity<List<ProductImageResponse>> addNewImages(@PathVariable UUID id, @RequestBody List<CreateImageDTO> imageDTOS) {
+        log.info("REST - Request to add new images to the Product with id: {}", id);
+        return ResponseEntity.status(HttpStatus.CREATED).body(productService.addNewImages(id, imageDTOS));
+    }
+
+    /**
+     * Delete Product Images
+     * @param id Product Image to be deleted
+     * @return void
+     */
+    @DeleteMapping("/{id}/images/{imageId}")
+    public ResponseEntity<Void> removeProductImage(@PathVariable UUID id, @PathVariable UUID imageId) {
+        log.info("REST - Request to remove ProductImage: {}", imageId);
+        productService.deleteProductImage(id, imageId);
+    }
+
+
+    /**
+     *
+     * @param id Product id for update
+     * @param attributeDTOS list of attributes to be set at the Product
+     * @return list of ProductAttributeResponse
+     */
+    @PostMapping("/{id}/attributes")
+    public ResponseEntity<List<ProductAttributesResponse>> addNewAttributes(@PathVariable UUID id, @RequestBody List<CreateAttributeDTO> attributeDTOS) {
+        log.info("REST - Request to add new attributes to the Product with id: {}", id);
+        return ResponseEntity.status(HttpStatus.CREATED).body(productService.addNewAttributes(id, attributeDTOS));
     }
 }

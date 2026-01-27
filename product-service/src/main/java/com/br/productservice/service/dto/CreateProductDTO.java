@@ -1,8 +1,11 @@
 package com.br.productservice.service.dto;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,21 +23,31 @@ import java.util.UUID;
 @ToString
 public class CreateProductDTO {
 
-    @NotNull
     @NotBlank
     private String sku;
-    @NotNull
+
     @NotBlank
+    @Size(min = 3, max = 200)
     private String name;
+
     private String description;
-    @NotNull
+
     @NotBlank
     private String brand;
+
     @NotNull
     private UUID categoryId;
+
     @NotNull
+    @DecimalMin(value = "0.01")
     private BigDecimal price;
+
+    @DecimalMin(value = "0.01")
     private BigDecimal compareAtPrice;
+
+    @Valid
     private List<CreateImageDTO> productImages;
+
+    @Valid
     private List<CreateAttributeDTO> productAttributes;
 }

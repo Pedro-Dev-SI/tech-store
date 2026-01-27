@@ -19,22 +19,48 @@ public class ProductImageService {
         this.productImageRepository = productImageRepository;
     }
 
+    /**
+     * Saves all product images with sequential positions and a single main image.
+     *
+     * @param imageDTOS List of image DTOs
+     * @param product Product owner
+     * @return List of saved images
+     */
     public List<ProductImage> saveAllProductImages(List<CreateImageDTO> imageDTOS, Product product) {
 
         List<ProductImage> imagesToSave = new ArrayList<>();
-        int count = 0;
+        int position = 0;
 
         for (var imageDTO : imageDTOS) {
             ProductImage imageToAdd = new ProductImage();
             imageToAdd.setUrl(imageDTO.getUrl());
-            imageToAdd.setIsMain(count == 0);
-            imageToAdd.setPosition(count);
+            imageToAdd.setIsMain(position == 0);
+            imageToAdd.setPosition(position);
             imageToAdd.setProduct(product);
             imageToAdd.setAltText(imageDTO.getAltText());
             imagesToSave.add(imageToAdd);
-            count++;
+            position++;
         }
 
         return productImageRepository.saveAll(imagesToSave);
+    }
+
+    /**
+     * Replaces all images for a product.
+     *
+     * @param imageDTOS New list of images
+     * @param product Product owner
+     * @return List of saved images
+     */
+    public List<ProductImage> replaceAllProductImages(List<CreateImageDTO> imageDTOS, Product product) {
+        productImageRepository.deleteByProductId(product.getId());
+        if (imageDTOS == null || imageDTOS.isEmpty()) {
+            return List.of();
+        }
+        return saveAllProductImages(imageDTOS, product);
+    }
+
+    public void delete(UUID imageId) {
+        productImageRepository.deleteById(imageId);
     }
 }

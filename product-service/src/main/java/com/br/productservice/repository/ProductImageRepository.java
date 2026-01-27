@@ -22,5 +22,7 @@ public interface ProductImageRepository extends JpaRepository<ProductImage, UUID
     
     // Verificar se produto tem imagem principal
     boolean existsByProductIdAndIsMainTrue(UUID productId);
-}
 
+    // Remove todas as imagens de um produto
+    void deleteByProductId(UUID productId);
+}

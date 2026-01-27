@@ -4,6 +4,12 @@ import java.text.Normalizer;
 
 public class SlugUtils {
 
+    /**
+     * Generates a URL-friendly slug from a string.
+     *
+     * @param input Raw text
+     * @return Normalized slug
+     */
     public static String generateSlug(String input) {
         if (input == null || input.isBlank()) {
             throw new IllegalArgumentException("Input não pode ser nulo ou vazio");

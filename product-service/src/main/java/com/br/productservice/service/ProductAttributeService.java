@@ -18,6 +18,13 @@ public class ProductAttributeService {
         this.productAttributeRepository = productAttributeRepository;
     }
 
+    /**
+     * Saves all attributes for a given product.
+     *
+     * @param attributeDTOS List of attribute DTOs
+     * @param product Product owner
+     * @return List of saved attributes
+     */
     public List<ProductAttribute> saveAllProductAttributes(List<CreateAttributeDTO> attributeDTOS, Product product) {
         List<ProductAttribute> attributesToSave = new ArrayList<>();
 
@@ -30,5 +37,20 @@ public class ProductAttributeService {
         }
 
         return productAttributeRepository.saveAll(attributesToSave);
+    }
+
+    /**
+     * Replaces all attributes for a product.
+     *
+     * @param attributeDTOS New list of attributes
+     * @param product Product owner
+     * @return List of saved attributes
+     */
+    public List<ProductAttribute> replaceAllProductAttributes(List<CreateAttributeDTO> attributeDTOS, Product product) {
+        productAttributeRepository.deleteByProductId(product.getId());
+        if (attributeDTOS == null || attributeDTOS.isEmpty()) {
+            return List.of();
+        }
+        return saveAllProductAttributes(attributeDTOS, product);
     }
 }
