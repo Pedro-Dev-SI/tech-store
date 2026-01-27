@@ -96,5 +96,14 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
         @Param("categoryIds") List<UUID> categoryIds, 
         @Param("search") String search, 
         Pageable pageable);
+
+    // Finds all slugs that match the base slug or have numeric suffix
+    @Query("SELECT p.slug FROM Product p WHERE " +
+           "p.slug = :baseSlug OR " +
+           "p.slug LIKE :baseSlugPattern " +
+           "ORDER BY p.slug DESC")
+    List<String> findSlugsWithSuffix(
+        @Param("baseSlug") String baseSlug,
+        @Param("baseSlugPattern") String baseSlugPattern);
 }
 

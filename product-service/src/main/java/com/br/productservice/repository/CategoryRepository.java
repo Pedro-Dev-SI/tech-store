@@ -16,6 +16,8 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
     
     // Listar categorias ativas
     List<Category> findByActiveTrue();
+
+    Optional<Category> findByIdAndActiveTrue(UUID id);
     
     // Buscar categorias filhas de uma categoria pai
     List<Category> findByParentId(UUID parentId);
