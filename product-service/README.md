@@ -141,6 +141,7 @@ O **Product Service** é responsável por:
 | `/api/v1/categories` | GET | Listar categorias | Público |
 | `/api/v1/categories/{id}` | GET | Detalhes da categoria | Público |
 | `/api/v1/categories` | POST | Criar categoria | ADMIN |
+| `/api/v1/categories/{id}` | PATCH | Atualizar categoria (parcial) | ADMIN |
 | `/api/v1/categories/{id}` | PUT | Atualizar categoria | ADMIN |
 | `/api/v1/categories/{id}` | DELETE | Desativar categoria | ADMIN |
 
@@ -181,9 +182,32 @@ Slug gerado: "iphone-15-pro-max-256gb-3"
 |-------|---------------|
 | **Hierarquia máxima** | 3 níveis (ex: Eletrônicos > Smartphones > Apple) |
 | **Slug único global** | Mesmo que nomes iguais em níveis diferentes |
+| **Nome único por nível** | Dentro do mesmo pai não pode repetir (inclui inativas) |
 | **Categoria inativa** | Não aparece em listagens, produtos dela também não aparecem |
 | **Deletar categoria com produtos** | Não permitido, deve mover produtos primeiro |
 | **Deletar categoria com subcategorias** | Não permitido, deve deletar subcategorias primeiro |
+
+#### Criação de Categoria (fluxo e slug)
+
+```
+1. Recebe: name, description (opcional), parentId (opcional)
+2. Validações:
+   - name obrigatório
+   - Se parentId informado: categoria pai deve existir e estar ativa
+   - Hierarquia máxima: 3 níveis
+3. Gera slug a partir do name:
+   - Remove acentos
+   - Converte para minúsculas
+   - Substitui espaços por hífen
+4. Garante unicidade global do slug:
+   - Se já existir, adiciona sufixo numérico: "-2", "-3", ...
+5. Salva categoria com active = true (padrão)
+```
+
+**Exemplos de slug:**
+- "Smartphones" → `smartphones`
+- Se já existir: `smartphones-2`
+- "Áudio e Vídeo" → `audio-e-video`
 
 ---
 
@@ -319,6 +343,23 @@ GET /api/v1/products/search?q=iphone&page=0&size=20
 5. Salva produto
 
 6. Retorna produto atualizado
+```
+
+---
+
+### Atualizar Categoria (PATCH)
+
+```
+1. Recebe: id + campos opcionais (name, description, parentId, active)
+2. Validações:
+   - Se name informado: não pode ser vazio
+   - Se parentId informado: categoria pai deve existir e estar ativa
+   - Hierarquia máxima: 3 níveis
+   - Nome único por nível (considera ativas e inativas)
+3. Se name alterado:
+   - Regera slug (mesma regra de criação)
+4. Atualiza somente os campos informados
+5. Retorna categoria atualizada
 ```
 
 ---
@@ -460,4 +501,3 @@ GET /api/v1/products/search?q=iphone&page=0&size=20
 > **Última atualização:** Janeiro 2026
 > 
 > Este documento deve ser atualizado sempre que houver mudanças nas regras de negócio.
-

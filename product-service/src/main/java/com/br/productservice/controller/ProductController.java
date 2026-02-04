@@ -216,6 +216,7 @@ public class ProductController {
     public ResponseEntity<Void> removeProductImage(@PathVariable UUID id, @PathVariable UUID imageId) {
         log.info("REST - Request to remove ProductImage: {}", imageId);
         productService.deleteProductImage(id, imageId);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
 

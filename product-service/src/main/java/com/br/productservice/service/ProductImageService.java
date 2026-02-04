@@ -60,6 +60,10 @@ public class ProductImageService {
         return saveAllProductImages(imageDTOS, product);
     }
 
+    /**
+     * Delete ProductImage by id
+     * @param imageId
+     */
     public void delete(UUID imageId) {
         productImageRepository.deleteById(imageId);
     }
