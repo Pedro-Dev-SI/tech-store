@@ -23,7 +23,7 @@ spring:
     baseline-on-migrate: true   # Útil se já existe dados no banco
 
 server:
-  port: 8084
+  port: 8082
 
 management:
   endpoints:
