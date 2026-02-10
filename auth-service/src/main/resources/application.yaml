@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: auth-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/auth_db
+    username: techstore
+    password: techstore123
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+server:
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    com.br.authservice: DEBUG
+    org.hibernate.SQL: DEBUG
+
+# JWT configs (ajuste depois conforme sua implementação)
+security:
+  jwt:
+    secret: sua-chave-secreta-muito-segura-para-producao-minimo-256-bits
+    expiration-ms: 900000
+    refresh-expiration-ms: 604800000
+
+# URL do user-service (para cadastro/consulta)
+user-service:
+  base-url: http://localhost:8082

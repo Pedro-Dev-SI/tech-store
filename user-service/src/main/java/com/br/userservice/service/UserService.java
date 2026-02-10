@@ -9,9 +9,10 @@ import com.br.userservice.model.vo.Email;
 import com.br.userservice.model.vo.Phone;
 import com.br.userservice.repository.UserRepository;
 import com.br.userservice.service.dto.CreateUserDTO;
+import com.br.userservice.service.dto.LoginRequest;
+import com.br.userservice.service.dto.LoginResponse;
 import com.br.userservice.service.dto.UserResponse;
 import com.br.userservice.service.mapper.UserMapper;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,5 +73,26 @@ public class UserService {
         User savedUser = userRepository.save(newUser);
 
         return userMapper.toResponse(savedUser);
+    }
+
+    /**
+     * Validates user credentials and returns minimal auth data.
+     */
+    @Transactional(readOnly = true)
+    public LoginResponse validateLogin(LoginRequest request) {
+        Email email = Email.of(request.getEmail());
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new BusinessException("Invalid credentials"));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new BusinessException("Invalid credentials");
+        }
+
+        return new LoginResponse(
+            user.getId(),
+            user.getEmail().getValue(),
+            user.getRole().name(),
+            user.getStatus().name()
+        );
     }
 }
