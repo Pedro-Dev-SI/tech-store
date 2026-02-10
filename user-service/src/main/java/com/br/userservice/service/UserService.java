@@ -3,6 +3,7 @@ package com.br.userservice.service;
 import com.br.userservice.enums.RoleEnum;
 import com.br.userservice.enums.StatusEnum;
 import com.br.userservice.exception.BusinessException;
+import com.br.userservice.exception.ResourceNotFoundException;
 import com.br.userservice.model.User;
 import com.br.userservice.model.vo.Cpf;
 import com.br.userservice.model.vo.Email;
@@ -16,6 +17,8 @@ import com.br.userservice.service.mapper.UserMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 
 @Service
@@ -94,5 +97,15 @@ public class UserService {
             user.getRole().name(),
             user.getStatus().name()
         );
+    }
+
+    public UserResponse findById(UUID userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User id cannot be null");
+        }
+
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User", userId.toString()));
+
+        return userMapper.toResponse(user);
     }
 }

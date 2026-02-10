@@ -6,6 +6,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import com.br.apigateway.util.JwtUtils;
+import io.jsonwebtoken.Claims;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
@@ -20,6 +22,7 @@ public class AuthFilter implements WebFilter, Ordered {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final WebClient authWebClient;
+    private final JwtUtils jwtUtils;
 
     // Public paths that do not require authentication
     private final List<String> publicPrefixes = List.of(
@@ -28,8 +31,9 @@ public class AuthFilter implements WebFilter, Ordered {
         "/api/v1/categories"
     );
 
-    public AuthFilter(WebClient authWebClient) {
+    public AuthFilter(WebClient authWebClient, JwtUtils jwtUtils) {
         this.authWebClient = authWebClient;
+        this.jwtUtils = jwtUtils;
     }
 
     /**
@@ -71,7 +75,22 @@ public class AuthFilter implements WebFilter, Ordered {
             .bodyToMono(Boolean.class)
             .flatMap(valid -> {
                 if (Boolean.TRUE.equals(valid)) {
-                    return chain.filter(exchange);
+                    Claims claims = jwtUtils.getClaims(token);
+                    String userId = claims.getSubject();
+                    String role = claims.get("role", String.class);
+
+                    ServerWebExchange mutated = exchange.mutate()
+                        .request(r -> r.headers(h -> {
+                            if (userId != null) {
+                                h.add("X-User-Id", userId);
+                            }
+                            if (role != null) {
+                                h.add("X-User-Role", role);
+                            }
+                        }))
+                        .build();
+
+                    return chain.filter(mutated);
                 }
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();

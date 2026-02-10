@@ -27,3 +27,7 @@ services:
   auth: http://localhost:8081
   users: http://localhost:8082
   products: http://localhost:8083
+
+security:
+  jwt:
+    secret: sua-chave-secreta-muito-segura-para-producao-minimo-256-bits
