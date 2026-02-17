@@ -24,6 +24,9 @@ public class AddressController {
         this.addressService = addressService;
     }
 
+    /**
+     * Lists all addresses for the authenticated user.
+     */
     @GetMapping("/list-all-user-adresses")
     public ResponseEntity<List<AddressResponse>> listAllUserAddresses(@RequestHeader("X-User-Id") UUID userId) {
         log.info("REST - Request to list all user addresses with user id: {}", userId);

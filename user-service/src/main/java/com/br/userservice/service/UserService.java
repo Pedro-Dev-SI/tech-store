@@ -26,6 +26,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 
+/**
+ * Business logic for user management.
+ */
 @Service
 public class UserService {
 
@@ -40,9 +43,7 @@ public class UserService {
     }
 
     /**
-     *
-     * @param createUserDTO
-     * @return
+     * Creates a new user with validation and password hashing.
      */
     @Transactional
     public UserResponse createUser(CreateUserDTO createUserDTO) {
@@ -104,6 +105,9 @@ public class UserService {
         );
     }
 
+    /**
+     * Returns a user by id.
+     */
     @Transactional
     public UserResponse findById(UUID userId) {
         if (userId == null) {
@@ -115,6 +119,9 @@ public class UserService {
         return userMapper.toResponse(user);
     }
 
+    /**
+     * Checks if a user exists by id.
+     */
     public Boolean existsById(UUID userId) {
         if (userId == null) {
             throw new IllegalArgumentException("User id cannot be null");
@@ -122,6 +129,9 @@ public class UserService {
         return userRepository.existsById(userId);
     }
 
+    /**
+     * Updates user name and/or phone.
+     */
     @Transactional
     public UserResponse updateUser(UUID id, UpdateUserDTO updateUserDTO) {
 
@@ -165,7 +175,9 @@ public class UserService {
         return userRepository.findAll(pageable).map(userMapper::toResponse);
     }
 
-
+    /**
+     * Soft-deletes a user by setting status to INACTIVE.
+     */
     public void deactivateUser(UUID id) {
 
         if (id == null) {
@@ -178,6 +190,9 @@ public class UserService {
 
     }
 
+    /**
+     * Blocks a user by setting status to BLOCKED.
+     */
     public void blockUser(UUID id) {
         if (id == null) {
             throw new IllegalArgumentException("User id must not be null");

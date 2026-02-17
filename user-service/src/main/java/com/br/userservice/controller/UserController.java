@@ -37,9 +37,7 @@ public class UserController {
     }
 
     /**
-     *
-     * @param createUserDTO
-     * @return
+     * Creates a new user (public endpoint).
      */
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@RequestBody @Valid CreateUserDTO createUserDTO) {
@@ -47,24 +45,36 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(createUserDTO));
     }
 
+    /**
+     * Validates user credentials (internal use by auth-service).
+     */
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest request) {
         log.info("REST - Request to validate login for email: {}", request.getEmail());
         return ResponseEntity.status(HttpStatus.OK).body(userService.validateLogin(request));
     }
 
+    /**
+     * Returns the current authenticated user's profile.
+     */
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getCurrentUser(@RequestHeader("X-User-Id") UUID userId){
         log.info("REST - Request to get current user wiht id: {}", userId);
         return ResponseEntity.status(HttpStatus.OK).body(userService.findById(userId));
     }
 
+    /**
+     * Partially updates the current authenticated user (name/phone).
+     */
     @PatchMapping("")
     public ResponseEntity<UserResponse> updateUser(@RequestHeader("X-User-Id") UUID id, @RequestBody UpdateUserDTO updateUserDTO) {
         log.info("REST - Request to update a user with id: {}", id);
         return ResponseEntity.status(HttpStatus.OK).body(userService.updateUser(id, updateUserDTO));
     }
 
+    /**
+     * Returns a user by id (admin only).
+     */
     @GetMapping("/{id}")
     public ResponseEntity<?> getUserById(@PathVariable("id") UUID userId, @RequestHeader("X-User-Role") String role) {
         log.info("REST - Request to get a user with id: {}", userId);
@@ -74,6 +84,9 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userService.findById(userId));
     }
 
+    /**
+     * Returns a paginated list of users (admin only).
+     */
     @GetMapping
     public ResponseEntity<?> listAllUsers(
         @RequestHeader("X-User-Role") String role,
@@ -88,6 +101,9 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userService.listAllUsers(page, size));
     }
 
+    /**
+     * Deactivates a user (soft delete) - admin only.
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deactivateUser(@PathVariable UUID id, @RequestHeader("X-User-Role") String role) {
         log.info("REST - Request to deactivate a user with id: {}", id);
@@ -98,6 +114,9 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body("User has been deactivated successfully");
     }
 
+    /**
+     * Blocks a user (admin only).
+     */
     @DeleteMapping("/{id}/deactivate")
     public ResponseEntity<?> blockUser(@PathVariable UUID id, @RequestHeader("X-User-Role") String role) {
         log.info("REST - Request to block user with id: {}", id);

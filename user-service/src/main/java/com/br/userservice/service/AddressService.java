@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Business logic for user addresses.
+ */
 @Service
 public class AddressService {
 
@@ -26,6 +29,9 @@ public class AddressService {
         this.addressMapper = addressMapper;
     }
 
+    /**
+     * Returns all addresses for a given user.
+     */
     @Transactional(readOnly = true)
     public List<AddressResponse> getAllUserAddresses(UUID userId) {
 
