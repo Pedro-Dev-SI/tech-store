@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
@@ -20,4 +22,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Boolean existsByPhone(Phone phone);
 
     Optional<User> findByEmail(Email email);
+
+    Page<User> findAll(Pageable pageable);
 }

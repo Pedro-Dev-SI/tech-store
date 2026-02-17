@@ -12,12 +12,17 @@ import com.br.userservice.repository.UserRepository;
 import com.br.userservice.service.dto.CreateUserDTO;
 import com.br.userservice.service.dto.LoginRequest;
 import com.br.userservice.service.dto.LoginResponse;
+import com.br.userservice.service.dto.UpdateUserDTO;
 import com.br.userservice.service.dto.UserResponse;
 import com.br.userservice.service.mapper.UserMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -99,6 +104,7 @@ public class UserService {
         );
     }
 
+    @Transactional
     public UserResponse findById(UUID userId) {
         if (userId == null) {
             throw new IllegalArgumentException("User id cannot be null");
@@ -107,5 +113,78 @@ public class UserService {
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User", userId.toString()));
 
         return userMapper.toResponse(user);
+    }
+
+    public Boolean existsById(UUID userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User id cannot be null");
+        }
+        return userRepository.existsById(userId);
+    }
+
+    @Transactional
+    public UserResponse updateUser(UUID id, UpdateUserDTO updateUserDTO) {
+
+        if (id == null) {
+            throw new IllegalArgumentException("User id cannot be null");
+        }
+
+        if (updateUserDTO == null) {
+            throw new IllegalArgumentException("User data cannot be null");
+        }
+
+        User userToUpdate = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", id.toString()));
+
+        if (updateUserDTO.getName() != null && updateUserDTO.getName().isBlank()) {
+            throw new IllegalArgumentException("Name cannot be blank");
+        }
+
+        Phone phone = updateUserDTO.getPhone() != null ? Phone.of(updateUserDTO.getPhone()) : null;
+
+        if (phone != null && userRepository.existsByPhone(phone)) {
+            throw new BusinessException("Phone informed has already been registered");
+        }
+
+        userToUpdate.setName(updateUserDTO.getName() != null ? updateUserDTO.getName() : userToUpdate.getName());
+        userToUpdate.setPhone(phone != null ? phone : userToUpdate.getPhone());
+
+        User userUpdated = userRepository.save(userToUpdate);
+
+        return userMapper.toResponse(userUpdated);
+    }
+
+    /**
+     * Returns paginated users (admin only at controller level).
+     */
+    @Transactional(readOnly = true)
+    public Page<UserResponse> listAllUsers(int page, int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+
+        Pageable pageable = PageRequest.of(safePage, safeSize);
+        return userRepository.findAll(pageable).map(userMapper::toResponse);
+    }
+
+
+    public void deactivateUser(UUID id) {
+
+        if (id == null) {
+            throw new IllegalArgumentException("User id must not be null");
+        }
+
+        User userToBeDeactivated = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", id.toString()));
+
+        userToBeDeactivated.setStatus(StatusEnum.INACTIVE);
+
+    }
+
+    public void blockUser(UUID id) {
+        if (id == null) {
+            throw new IllegalArgumentException("User id must not be null");
+        }
+
+        User userToBeDeactivated = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", id.toString()));
+
+        userToBeDeactivated.setStatus(StatusEnum.BLOCKED);
     }
 }
