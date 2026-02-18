@@ -1,5 +1,6 @@
 package com.br.productservice.controller;
 
+import com.br.productservice.enums.RoleEnum;
 import com.br.productservice.service.ProductService;
 import com.br.productservice.service.dto.CreateAttributeDTO;
 import com.br.productservice.service.dto.CreateImageDTO;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -159,13 +161,16 @@ public class ProductController {
     /**
      * Creates a new product.
      *
+     * @param role User role - required ADMIN
      * @param productDTO Product data
      * @return Created product
      */
     @PostMapping()
-    public ResponseEntity<ProductResponse> create(@Valid @RequestBody CreateProductDTO productDTO){
+    public ResponseEntity<?> create(@RequestHeader("X-User-Role") String role, @Valid @RequestBody CreateProductDTO productDTO){
         log.info("REST - Request to create a new product with the name: {}. SKU: {}", productDTO.getName(), productDTO.getSku());
-        //TODO - IMPLEMENT THE AUTH VERIFICATION (ONLY ADMIN ROLES CAN CREATE A NEW PRODUCT)
+        if (!RoleEnum.ADMIN.name().equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.createNewProduct(productDTO));
     }
 
@@ -177,20 +182,27 @@ public class ProductController {
      * @return Updated product
      */
     @PatchMapping("/{id}")
-    public ResponseEntity<ProductResponse> update(@PathVariable UUID id, @RequestBody UpdateProductDTO productDTO) {
+    public ResponseEntity<?> update(@RequestHeader("X-User-Role") String role, @PathVariable UUID id, @RequestBody UpdateProductDTO productDTO) {
         log.info("REST - Request to update the product with id: {}", id);
+        if (!RoleEnum.ADMIN.name().equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        }
         return ResponseEntity.status(HttpStatus.OK).body(productService.updateProduct(id, productDTO));
     }
 
     /**
      * Inactivate product by its id
      *
-     * @param id Product id
+     * @param role
+     * @param id   Product id
      * @return
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> inactivate(@PathVariable UUID id) {
+    public ResponseEntity<?> inactivate(@RequestHeader("X-User-Role") String role, @PathVariable UUID id) {
         log.info("REST - Request to inactivate the product with id: {}", id);
+        if (!RoleEnum.ADMIN.name().equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        }
         productService.inactivateProduct(id);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -202,8 +214,11 @@ public class ProductController {
      * @return list of ProductImageResponse
      */
     @PostMapping("/{id}/images")
-    public ResponseEntity<List<ProductImageResponse>> addNewImages(@PathVariable UUID id, @RequestBody List<CreateImageDTO> imageDTOS) {
+    public ResponseEntity<?> addNewImages(@RequestHeader("X-User-Role") String role, @PathVariable UUID id, @RequestBody List<CreateImageDTO> imageDTOS) {
         log.info("REST - Request to add new images to the Product with id: {}", id);
+        if (!RoleEnum.ADMIN.name().equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.addNewImages(id, imageDTOS));
     }
 
@@ -213,8 +228,11 @@ public class ProductController {
      * @return void
      */
     @DeleteMapping("/{id}/images/{imageId}")
-    public ResponseEntity<Void> removeProductImage(@PathVariable UUID id, @PathVariable UUID imageId) {
+    public ResponseEntity<?> removeProductImage(@RequestHeader("X-User-Role") String role, @PathVariable UUID id, @PathVariable UUID imageId) {
         log.info("REST - Request to remove ProductImage: {}", imageId);
+        if (!RoleEnum.ADMIN.name().equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        }
         productService.deleteProductImage(id, imageId);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -227,8 +245,11 @@ public class ProductController {
      * @return list of ProductAttributeResponse
      */
     @PostMapping("/{id}/attributes")
-    public ResponseEntity<List<ProductAttributesResponse>> addNewAttributes(@PathVariable UUID id, @RequestBody List<CreateAttributeDTO> attributeDTOS) {
+    public ResponseEntity<?> addNewAttributes(@RequestHeader("X-User-Role") String role, @PathVariable UUID id, @RequestBody List<CreateAttributeDTO> attributeDTOS) {
         log.info("REST - Request to add new attributes to the Product with id: {}", id);
+        if (!RoleEnum.ADMIN.name().equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.addNewAttributes(id, attributeDTOS));
     }
 }

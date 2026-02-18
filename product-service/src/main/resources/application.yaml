@@ -39,3 +39,9 @@ logging:
     root: INFO
     br.com.techstore: DEBUG   # Mais detalhes no seu código
     org.hibernate.SQL: DEBUG  # Ver queries SQL
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger

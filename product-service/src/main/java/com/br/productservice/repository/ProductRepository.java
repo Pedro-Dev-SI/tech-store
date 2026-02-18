@@ -105,5 +105,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     List<String> findSlugsWithSuffix(
         @Param("baseSlug") String baseSlug,
         @Param("baseSlugPattern") String baseSlugPattern);
-}
 
+    boolean existsByCategoryIdIn(List<UUID> categoryIds);
+}

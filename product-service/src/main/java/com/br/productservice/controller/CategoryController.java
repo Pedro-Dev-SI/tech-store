@@ -1,6 +1,7 @@
 package com.br.productservice.controller;
 
 
+import com.br.productservice.enums.RoleEnum;
 import com.br.productservice.service.CategoryService;
 import com.br.productservice.service.dto.CategoryResponse;
 import com.br.productservice.service.dto.CreateCategoryDTO;
@@ -14,8 +15,10 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 import java.util.List;
 import java.util.UUID;
@@ -54,15 +57,31 @@ public class CategoryController {
     }
 
     @PostMapping()
-    public ResponseEntity<CategoryResponse> create(@Valid @RequestBody CreateCategoryDTO categoryDTO) {
+    public ResponseEntity<?> create(@RequestHeader("X-User-Role") String role, @Valid @RequestBody CreateCategoryDTO categoryDTO) {
         log.info("REST - Request to create a new category");
+        if (!RoleEnum.ADMIN.name().equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(categoryService.createNewCategory(categoryDTO));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<CategoryResponse> update(@PathVariable UUID id, @RequestBody UpdateCategoryDTO categoryDTO) {
+    public ResponseEntity<?> update(@RequestHeader("X-User-Role") String role, @PathVariable UUID id, @RequestBody UpdateCategoryDTO categoryDTO) {
         log.info("REST - Request to update category");
+        if (!RoleEnum.ADMIN.name().equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        }
         return ResponseEntity.status(HttpStatus.OK).body(categoryService.updateCategory(id, categoryDTO));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deactivate(@RequestHeader("X-User-Role") String role, @PathVariable UUID id) {
+        log.info("REST - Request to deactivate category");
+        if (!RoleEnum.ADMIN.name().equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        }
+        categoryService.deactivateCategory(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
 }

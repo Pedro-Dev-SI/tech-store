@@ -1,0 +1,214 @@
+{
+  "info": {
+    "name": "TechStore Full Flow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Full flow via API Gateway: auth, user, addresses, products"
+  },
+  "variable": [
+    {"key": "gatewayUrl", "value": "http://localhost:8080"},
+    {"key": "accessToken", "value": ""},
+    {"key": "refreshToken", "value": ""},
+    {"key": "userId", "value": ""},
+    {"key": "categoryId", "value": ""},
+    {"key": "productId", "value": ""},
+    {"key": "addressId", "value": ""}
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{gatewayUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"pedro@teste.com\",\n  \"cpf\": \"14317084619\",\n  \"phone\": \"11999999999\",\n  \"name\": \"Pedro\",\n  \"password\": \"SenhaForte1\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json && json.accessToken) pm.environment.set('accessToken', json.accessToken);",
+                  "if (json && json.refreshToken) pm.environment.set('refreshToken', json.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{gatewayUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"pedro@teste.com\",\n  \"password\": \"SenhaForte1\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json && json.accessToken) pm.environment.set('accessToken', json.accessToken);",
+                  "if (json && json.refreshToken) pm.environment.set('refreshToken', json.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validate Token",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/api/v1/auth/validate?token={{accessToken}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{gatewayUrl}}/api/v1/users/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json && json.id) pm.environment.set('userId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Me (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{gatewayUrl}}/api/v1/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Pedro Atualizado\",\n  \"phone\": \"11988887777\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{gatewayUrl}}/api/v1/users?page=0&size=10"
+          }
+        },
+        {
+          "name": "Get User By Id (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{gatewayUrl}}/api/v1/users/{{userId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Addresses",
+      "item": [
+        {
+          "name": "List My Addresses",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{gatewayUrl}}/api/v1/users/me/addresses"
+          }
+        },
+        {
+          "name": "Add Address",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{gatewayUrl}}/api/v1/users/me/addresses",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"street\": \"Rua A\",\n  \"number\": \"123\",\n  \"complement\": \"Apto 10\",\n  \"neighborhood\": \"Centro\",\n  \"city\": \"Sao Paulo\",\n  \"state\": \"SP\",\n  \"ziCode\": \"01000-000\",\n  \"isDefault\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Address",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{gatewayUrl}}/api/v1/users/me/addresses/{{addressId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"street\": \"Rua B\",\n  \"number\": \"999\",\n  \"isDefault\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Address",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{gatewayUrl}}/api/v1/users/me/addresses/{{addressId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "List Products (Public)",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/api/v1/products"
+          }
+        },
+        {
+          "name": "Create Product (Protected)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{gatewayUrl}}/api/v1/products",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"TEST-PRD-001\",\n  \"name\": \"Produto Teste\",\n  \"description\": \"Produto para testes\",\n  \"brand\": \"Marca\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"price\": 10.0\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

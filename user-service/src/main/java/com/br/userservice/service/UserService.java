@@ -120,6 +120,18 @@ public class UserService {
     }
 
     /**
+     * Returns a user entity by id.
+     */
+    @Transactional
+    public User findUserEntityById(UUID userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User id cannot be null");
+        }
+
+        return userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User", userId.toString()));
+    }
+
+    /**
      * Checks if a user exists by id.
      */
     public Boolean existsById(UUID userId) {

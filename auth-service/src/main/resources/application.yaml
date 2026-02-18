@@ -40,6 +40,12 @@ logging:
     com.br.authservice: DEBUG
     org.hibernate.SQL: DEBUG
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger
+
 # JWT configs (ajuste depois conforme sua implementação)
 security:
   jwt:

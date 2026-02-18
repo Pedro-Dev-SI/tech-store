@@ -31,3 +31,16 @@ services:
 security:
   jwt:
     secret: sua-chave-secreta-muito-segura-para-producao-minimo-256-bits
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger
+    urls:
+      - name: auth-service
+        url: ${services.auth}/v3/api-docs
+      - name: user-service
+        url: ${services.users}/v3/api-docs
+      - name: product-service
+        url: ${services.products}/v3/api-docs

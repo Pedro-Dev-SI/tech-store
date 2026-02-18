@@ -1,10 +1,14 @@
 package com.br.userservice.controller;
 
 import com.br.userservice.enums.RoleEnum;
+import com.br.userservice.service.AddressService;
 import com.br.userservice.service.UserService;
+import com.br.userservice.service.dto.AddressResponse;
+import com.br.userservice.service.dto.CreateAddressDTO;
 import com.br.userservice.service.dto.CreateUserDTO;
 import com.br.userservice.service.dto.LoginRequest;
 import com.br.userservice.service.dto.LoginResponse;
+import com.br.userservice.service.dto.UpdateAddressDTO;
 import com.br.userservice.service.dto.UpdateUserDTO;
 import com.br.userservice.service.dto.UserResponse;
 import jakarta.validation.Valid;
@@ -23,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -31,9 +36,11 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+    private final AddressService addressService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, AddressService addressService) {
         this.userService = userService;
+        this.addressService = addressService;
     }
 
     /**
@@ -127,6 +134,41 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body("User has been blocked successfully");
     }
 
+    /**
+     * Lists all addresses for the authenticated user.
+     */
+    @GetMapping("/me/addresses")
+    public ResponseEntity<List<AddressResponse>> listAllUserAddresses(@RequestHeader("X-User-Id") UUID userId) {
+        log.info("REST - Request to list all user addresses with user id: {}", userId);
+        return ResponseEntity.status(HttpStatus.OK).body(addressService.getAllUserAddresses(userId));
+    }
 
+    @PostMapping("/me/addresses")
+    public ResponseEntity<AddressResponse> addAddress(@RequestHeader("X-User-Id") UUID userId, @RequestBody @Valid CreateAddressDTO createAddressDTO){
+        log.info("REST - Request to add new address to the user with the id: {}", userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(addressService.addNewAddress(createAddressDTO, userId));
+    }
 
+    @PatchMapping("/me/addresses/{addressId}")
+    public ResponseEntity<AddressResponse> updateAddress(
+        @RequestHeader("X-User-Id") UUID userId,
+        @PathVariable UUID addressId,
+        @RequestBody @Valid UpdateAddressDTO updateAddressDTO
+    ) {
+        log.info("REST - Request to update a address from a user with the id: {}", userId);
+        return ResponseEntity.status(HttpStatus.OK).body(addressService.updateAddress(updateAddressDTO, userId, addressId));
+    }
+
+    /**
+     * Deletes an address by id (authenticated user only).
+     */
+    @DeleteMapping("/me/addresses/{addressId}")
+    public ResponseEntity<Void> deleteAddress(
+        @RequestHeader("X-User-Id") UUID userId,
+        @PathVariable UUID addressId
+    ) {
+        log.info("REST - Request to delete address {} for user {}", addressId, userId);
+        addressService.deleteAddress(userId, addressId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 }

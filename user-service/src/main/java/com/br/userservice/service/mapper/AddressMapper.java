@@ -9,6 +9,6 @@ import org.mapstruct.Mapping;
 public interface AddressMapper {
 
     @Mapping(target = "userId", source = "user.id")
-    @Mapping(target = "isDefault", expression = "java(Boolean.TRUE.equals(address.getIsDefault))")
+    @Mapping(target = "isDefault", expression = "java(Boolean.TRUE.equals(address.getIsDefault()))")
     AddressResponse toResponse(Address address);
 }

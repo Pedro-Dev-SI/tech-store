@@ -5,6 +5,7 @@ import com.br.productservice.exception.ResourceDuplicatedException;
 import com.br.productservice.exception.ResourceNotFoundException;
 import com.br.productservice.model.Category;
 import com.br.productservice.repository.CategoryRepository;
+import com.br.productservice.repository.ProductRepository;
 import com.br.productservice.service.dto.CategoryResponse;
 import com.br.productservice.service.dto.CreateCategoryDTO;
 import com.br.productservice.service.dto.UpdateCategoryDTO;
@@ -24,11 +25,13 @@ import java.util.UUID;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
     private final CategoryMapper categoryMapper;
 
-    public CategoryService(CategoryRepository categoryRepository, CategoryMapper categoryMapper) {
+    public CategoryService(CategoryRepository categoryRepository, CategoryMapper categoryMapper, ProductRepository productRepository) {
         this.categoryRepository = categoryRepository;
         this.categoryMapper = categoryMapper;
+        this.productRepository = productRepository;
     }
 
     /**
@@ -291,5 +294,32 @@ public class CategoryService {
 
         Category savedCategory = categoryRepository.save(categoryForUpdate);
         return categoryMapper.toResponse(savedCategory);
+    }
+
+    /**
+     * Deactivates a category. If it has children, they are deactivated too.
+     * If any product is linked to any category in this subtree, it throws BusinessException.
+     */
+    @Transactional
+    public void deactivateCategory(UUID id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Category id must not be null");
+        }
+
+        Category category = categoryRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Category", id.toString()));
+
+        Set<UUID> idsToDeactivate = getCategoryIdsIncludingChildren(category.getId());
+
+        if (productRepository.existsByCategoryIdIn(idsToDeactivate.stream().toList())) {
+            throw new BusinessException("Cannot deactivate category with products linked");
+        }
+
+        List<Category> categories = categoryRepository.findAllById(idsToDeactivate);
+        for (Category c : categories) {
+            c.setActive(false);
+        }
+
+        categoryRepository.saveAll(categories);
     }
 }
