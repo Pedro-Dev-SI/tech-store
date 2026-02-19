@@ -154,4 +154,30 @@ public class AddressService {
             setter.accept(value);
         }
     }
+
+    @Transactional(readOnly = true)
+    public AddressResponse getDefaultAddress(UUID userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User id must not be null");
+        }
+
+        if (!userService.existsById(userId)) {
+            throw new ResourceNotFoundException("User", userId.toString());
+        }
+
+        Address defaultAddress = addressRepository.findAddressByUserIdAndIsDefaultIsTrue(userId).orElseThrow(() -> new ResourceNotFoundException("Address", userId.toString()));
+
+        return addressMapper.toResponse(defaultAddress);
+    }
+
+    @Transactional(readOnly = true)
+    public AddressResponse findById(UUID id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Address id must not be null");
+        }
+
+        Address address = addressRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Address", id.toString()));
+
+        return addressMapper.toResponse(address);
+    }
 }

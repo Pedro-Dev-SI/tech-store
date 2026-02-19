@@ -143,6 +143,18 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(addressService.getAllUserAddresses(userId));
     }
 
+    @GetMapping("/me/addresses/{id}")
+    public ResponseEntity<AddressResponse> getAddressById(@PathVariable UUID id) {
+        log.info("REST - Request to get an address by id: {}", id);
+        return ResponseEntity.status(HttpStatus.OK).body(addressService.findById(id));
+    }
+
+    @GetMapping("/me/addresses/default")
+    public ResponseEntity<AddressResponse> getDefaultAddress(@RequestHeader("X-User-Id") UUID userId) {
+        log.info("REST - Request to get the default address by user id: {}", userId);
+        return ResponseEntity.status(HttpStatus.OK).body(addressService.getDefaultAddress(userId));
+    }
+
     @PostMapping("/me/addresses")
     public ResponseEntity<AddressResponse> addAddress(@RequestHeader("X-User-Id") UUID userId, @RequestBody @Valid CreateAddressDTO createAddressDTO){
         log.info("REST - Request to add new address to the user with the id: {}", userId);

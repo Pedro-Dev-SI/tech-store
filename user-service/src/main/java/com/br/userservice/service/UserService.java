@@ -4,11 +4,13 @@ import com.br.userservice.enums.RoleEnum;
 import com.br.userservice.enums.StatusEnum;
 import com.br.userservice.exception.BusinessException;
 import com.br.userservice.exception.ResourceNotFoundException;
+import com.br.userservice.model.Address;
 import com.br.userservice.model.User;
 import com.br.userservice.model.vo.Cpf;
 import com.br.userservice.model.vo.Email;
 import com.br.userservice.model.vo.Phone;
 import com.br.userservice.repository.UserRepository;
+import com.br.userservice.service.dto.AddressResponse;
 import com.br.userservice.service.dto.CreateUserDTO;
 import com.br.userservice.service.dto.LoginRequest;
 import com.br.userservice.service.dto.LoginResponse;
@@ -35,11 +37,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final AddressService addressService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, UserMapper userMapper) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, UserMapper userMapper, AddressService addressService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
+        this.addressService = addressService;
     }
 
     /**
@@ -214,4 +218,5 @@ public class UserService {
 
         userToBeDeactivated.setStatus(StatusEnum.BLOCKED);
     }
+
 }
