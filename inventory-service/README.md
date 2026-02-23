@@ -1,22 +1,22 @@
-# 📦 Inventory Service - TechStore
+# Inventory Service - TechStore
 
-> Microserviço responsável pelo controle de estoque e movimentações.
-
----
-
-## ✅ Objetivo
-- Controlar estoque por produto
-- Reservar e liberar estoque
-- Registrar movimentações (auditoria)
-- Publicar eventos de estoque via Kafka
+> Microservice responsible for stock control and stock movements.
 
 ---
 
-## 🧩 Entidades
+## Goal
+- Control stock per product
+- Reserve and release stock
+- Track stock movements (audit trail)
+- Publish stock events to Kafka
+
+---
+
+## Entities
 
 ### Inventory
 - `id` (UUID)
-- `productId` (UUID, único)
+- `productId` (UUID, unique)
 - `quantity` (int)
 - `reservedQuantity` (int)
 - `minStockAlert` (int)
@@ -33,32 +33,29 @@
 
 ---
 
-## 🔌 Endpoints (planejados)
+## Endpoints
 
-| Endpoint | Método | Descrição | Auth |
-|----------|--------|-----------|------|
-| `/api/v1/inventory/{productId}` | GET | Consultar estoque | Interno/ADMIN |
-| `/api/v1/inventory/{productId}` | PUT | Atualizar quantidade | ADMIN |
-| `/api/v1/inventory/reserve` | POST | Reservar estoque | Interno |
-| `/api/v1/inventory/release` | POST | Liberar reserva | Interno |
-| `/api/v1/inventory/confirm` | POST | Confirmar baixa | Interno |
-| `/api/v1/inventory/internal/{productId}` | GET | Consultar estoque (interno) | Interno |
-| `/api/v1/inventory/low-stock` | GET | Produtos com estoque baixo | ADMIN |
+| Endpoint | Method | Description | Auth |
+|----------|--------|-------------|------|
+| `/api/v1/inventory/{productId}` | GET | Get stock by product | Internal/ADMIN |
+| `/api/v1/inventory/{productId}` | PUT | Update stock quantity | ADMIN |
+| `/api/v1/inventory/reserve` | POST | Reserve stock | Internal |
+| `/api/v1/inventory/release` | POST | Release reservation | Internal |
+| `/api/v1/inventory/confirm` | POST | Confirm stock output | Internal |
+| `/api/v1/inventory/internal/{productId}` | GET | Internal stock query | Internal |
+| `/api/v1/inventory/low-stock` | GET | List low-stock products | ADMIN |
 
 ---
 
-## 📣 Eventos Kafka
+## Kafka Events
 
-### Tópicos publicados
+### Published topics
 - `inventory.stock.reserved`
 - `inventory.stock.released`
 - `inventory.stock.confirmed`
 - `inventory.stock.low-alert`
 
-### Payloads
-Eventos publicados como JSON.
-
-Exemplos:
+### Event payloads (JSON)
 
 **StockReservedEvent**
 - `eventId` (UUID)
@@ -88,36 +85,23 @@ Exemplos:
 - `availableQuantity` (int)
 - `minimumQuantity` (int)
 
-### Quando publica
-- Reserva: ao reservar estoque (`/reserve`)
-- Liberação: ao liberar reserva (`/release`)
-- Confirmação: ao confirmar saída (`/confirm`)
-- Alerta: quando `quantity <= minStockAlert` após update ou confirmação
+### Publish conditions
+- Reserve event: after `/reserve`
+- Release event: after `/release`
+- Confirm event: after `/confirm`
+- Low alert event: when `quantity <= minStockAlert` after update or confirmation
 
 ---
 
-## 🧭 Roadmap (passo a passo)
-
-1) Configurar banco e Flyway
-2) Criar entidades Inventory e StockMovement
-3) Criar repositories
-4) DTOs de request/response
-5) Services com regras de negócio
-6) Controllers
-7) Eventos Kafka (stock.reserved, stock.released, stock.confirmed, stock.low-alert)
-8) Testes unitários
-
----
-
-## ⚙️ Stack
+## Stack
 - Java 21
-- Spring Boot 3.2+
+- Spring Boot
 - Spring Data JPA
 - PostgreSQL
 - Flyway
 - Kafka
-- Validation
+- Bean Validation
 
 ---
 
-> Atualize este README conforme o serviço evoluir.
+> Keep this README updated as the service evolves.

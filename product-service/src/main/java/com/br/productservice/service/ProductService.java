@@ -607,4 +607,12 @@ public class ProductService {
 
         productImageService.delete(imageId);
     }
+
+    @Transactional
+    public List<ProductResponse> findAllByIds(List<UUID> ids) {
+        if (ids.isEmpty()) {
+            throw new IllegalArgumentException("Ids list must not be empty");
+        }
+        return productRepository.findAllByIdIsInAndActiveIsTrue(ids).stream().map(productMapper::toResponse).toList();
+    }
 }

@@ -107,4 +107,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
         @Param("baseSlugPattern") String baseSlugPattern);
 
     boolean existsByCategoryIdIn(List<UUID> categoryIds);
+
+    List<Product> findAllByIdIsInAndActiveIsTrue(List<UUID> ids);
 }

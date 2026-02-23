@@ -24,6 +24,10 @@ spring:
                 - Path=/api/v1/inventory/**
               filters:
                 - AddRequestHeader=X-Internal-Call, true
+            - id: order-service
+              uri: ${services.orders}
+              predicates:
+                - Path=/api/v1/orders/**
 
 
 server:
@@ -34,6 +38,7 @@ services:
   users: http://localhost:8082
   products: http://localhost:8083
   inventory: http://localhost:8084
+  orders: http://localhost:8085
 
 security:
   jwt:
@@ -53,3 +58,5 @@ springdoc:
         url: ${services.products}/v3/api-docs
       - name: inventory-service
         url: ${services.inventory}/v3/api-docs
+      - name: order-service
+        url: ${services.orders}/v3/api-docs

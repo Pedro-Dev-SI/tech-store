@@ -1,105 +1,74 @@
-# 🌐 API Gateway - TechStore
+# API Gateway - TechStore
 
-> Ponto de entrada único para todos os microserviços. Centraliza autenticação, roteamento e políticas comuns.
-
----
-
-## ✅ O que o Gateway faz (visão de produto)
-
-- **Roteamento**: recebe todas as requisições e direciona para o serviço correto.
-- **Autenticação**: valida JWT uma única vez antes de liberar o acesso.
-- **Autorização**: bloqueia rotas de ADMIN/USER.
-- **CORS**: configurações de acesso do front-end.
-- **Observabilidade**: logs e métricas centralizadas.
-- **Rate limit** (futuro): proteção contra abuso.
+> Single entry point for all microservices. Centralizes authentication, routing, and shared policies.
 
 ---
 
-## 🔌 Rotas previstas
+## What the Gateway does (product view)
 
-| Path | Serviço |
+- **Routing**: receives all requests and forwards them to the correct service.
+- **Authentication**: validates JWT once before allowing access.
+- **Authorization**: blocks ADMIN/USER protected routes when needed.
+- **CORS**: controls front-end access rules.
+- **Observability**: centralized logs and metrics.
+- **Rate limiting** (future): abuse protection.
+
+---
+
+## Current Routes
+
+| Path | Service |
 |------|---------|
 | `/api/v1/auth/**` | auth-service |
 | `/api/v1/users/**` | user-service |
 | `/api/v1/products/**` | product-service |
 | `/api/v1/categories/**` | product-service |
+| `/api/v1/inventory/**` | inventory-service |
+| `/api/v1/orders/**` | order-service |
 
 ---
 
-## 🧭 Passo a passo (construção)
+## Build Steps
 
-1) **Configuração base**
-- Ajustar `application.yaml` com as URLs dos serviços
-- Definir porta do gateway (ex: 8080)
-- Exemplo mínimo:
-```yaml
-server:
-  port: 8080
+1) **Base configuration**
+- Configure `application.yaml` with service URLs.
+- Define gateway port (example: 8080).
 
-services:
-  auth: http://localhost:8081
-  users: http://localhost:8082
-  products: http://localhost:8083
-```
-
-2) **Rotas**
-- Criar rotas no `application.yaml`
-- Validar roteamento básico (sem auth)
- - Exemplo:
-```yaml
-spring:
-  cloud:
-    gateway:
-      routes:
-        - id: auth-service
-          uri: ${services.auth}
-          predicates:
-            - Path=/api/v1/auth/**
-        - id: user-service
-          uri: ${services.users}
-          predicates:
-            - Path=/api/v1/users/**
-        - id: product-service
-          uri: ${services.products}
-          predicates:
-            - Path=/api/v1/products/**, /api/v1/categories/**
-```
+2) **Routes**
+- Create route definitions in `application.yaml`.
+- Validate basic routing first.
 
 3) **Auth Filter**
-- Criar filtro global que:
-  - lê o header `Authorization`
-  - chama `/api/v1/auth/validate`
-  - bloqueia se inválido
-  - libera se válido
+- Create a global filter that:
+  - reads `Authorization` header
+  - calls `/api/v1/auth/validate`
+  - blocks invalid tokens
+  - allows valid tokens
 
-4) **Rotas públicas x protegidas**
-- Auth e produtos GET são públicos
-- Usuários e produtos admin são protegidos
+4) **Public vs protected routes**
+- `/api/v1/auth/**` and public product/category GET routes are public.
+- Protected routes require valid JWT.
 
-5) **Propagação de claims (futuro)**
-- Passar `X-User-Id` e `X-User-Role` para serviços internos
+5) **Claims propagation**
+- Inject `X-User-Id` and `X-User-Role` for downstream services.
 
-6) **Observabilidade**
-- Habilitar `/actuator/health`
-- Logs de requests
+6) **Observability**
+- Enable `/actuator/health`.
+- Keep request logs enabled.
 
 ---
 
-## ⚙️ Stack
+## Stack
 
 - Spring Cloud Gateway (WebFlux)
-- Spring Boot 3.2+
+- Spring Boot
 - Actuator
 - Validation
 
 ---
 
-## 📌 Observações
+## Notes
 
-- O gateway é o **único ponto de entrada** do sistema.
-- Em produção, ele deve validar tokens antes de liberar acesso.
-- Os serviços internos não devem expor endpoints diretamente ao cliente final.
-
----
-
-> Este README evolui conforme a segurança e os filtros são implementados.
+- The gateway is the **single public entry point**.
+- In production, internal services should not be directly exposed.
+- Swagger can aggregate docs from all microservices.

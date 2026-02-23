@@ -5,11 +5,8 @@ import com.br.orderservice.service.dto.UserResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,5 +23,5 @@ public interface UserServiceClient {
     AddressResponse getDefaultAddress(@RequestHeader("X-User-Id") UUID userId);
 
     @GetMapping("/api/v1/users/me/addresses/{id}")
-    AddressResponse getAddressById(@PathVariable UUID id);
+    AddressResponse getAddressById(@RequestHeader("X-User-Id") UUID userId, @PathVariable UUID id);
 }

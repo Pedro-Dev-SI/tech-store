@@ -1,101 +1,94 @@
-# 🔐 Auth Service - TechStore E-Commerce
+# Auth Service - TechStore E-Commerce
 
-> Microserviço responsável por autenticação, emissão de JWT e refresh tokens.
+> Microservice responsible for authentication, JWT issuance, and refresh-token lifecycle.
 
 ---
 
-## 📌 Regras de Negócio (visão de P.O.)
+## Business Rules (PO view)
 
-### Objetivo do serviço
-Garantir login seguro, emissão e renovação de tokens, e controle de sessões.
+### Service Goal
+Provide secure login, token issuance/renewal, and session control.
 
-### Entidades
+### Entity
 
 #### RefreshToken
-| Campo | Tipo | Regras |
-|-------|------|--------|
-| `id` | UUID | Gerado automaticamente |
-| `token` | String | Único, 256 caracteres aleatórios |
-| `userId` | UUID | ID do usuário |
-| `expiryDate` | DateTime | Expiração do refresh |
-| `revoked` | Boolean | Revogado no logout |
-| `createdAt` | DateTime | Gerado automaticamente |
+| Field | Type | Rules |
+|-------|------|-------|
+| `id` | UUID | Auto-generated |
+| `token` | String | Unique token |
+| `userId` | UUID | User identifier |
+| `expiryDate` | DateTime | Refresh token expiration |
+| `revoked` | Boolean | Revoked on logout |
+| `createdAt` | DateTime | Auto-generated |
 
 ---
 
-## ✅ Regras de Negócio (detalhadas)
+## Detailed Rules
 
 ### Tokens
-- Access token expira em **15 minutos**
-- Refresh token expira em **7 dias**
-- **Máximo de 5 refresh tokens ativos** por usuário (revogar os mais antigos)
+- Access token expires in **15 minutes**.
+- Refresh token expires in **7 days**.
+- Maximum **5 active refresh tokens** per user (revoke oldest first).
 
-### Senha e bloqueio
-- Senha com **mínimo 8 caracteres**, **1 maiúscula**, **1 número**
-- **5 tentativas falhas** de login → bloqueia por **15 minutos**
-
----
-
-## 🔌 Endpoints
-
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/v1/auth/register` | POST | Registrar novo usuário (chama user-service) |
-| `/api/v1/auth/login` | POST | Autenticar e gerar tokens |
-| `/api/v1/auth/refresh` | POST | Renovar access token |
-| `/api/v1/auth/logout` | POST | Revogar refresh token |
-| `/api/v1/auth/validate` | GET | Validar token (gateway) |
+### Password and lock policy
+- Password requires **minimum 8 chars**, **1 uppercase**, **1 number**.
+- **5 failed login attempts** lock the user for **15 minutes**.
 
 ---
 
-## 🧭 Passo a passo (roteiro de construção)
+## Endpoints
 
-1) **Configuração**
-- `application.yaml` com DB `auth_db`, JWT config e URL do user-service
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/auth/register` | POST | Register new user (calls user-service) |
+| `/api/v1/auth/login` | POST | Authenticate and issue tokens |
+| `/api/v1/auth/refresh` | POST | Issue new access token |
+| `/api/v1/auth/logout` | POST | Revoke refresh token |
+| `/api/v1/auth/validate` | GET | Validate token (used by gateway) |
 
-2) **Modelagem**
-- Entidade `RefreshToken`
-- Campos + constraints (token único)
+---
+
+## Build Flow
+
+1) **Configuration**
+- Configure `application.yaml` with `auth_db`, JWT settings, and user-service URL.
+
+2) **Modeling**
+- Create `RefreshToken` entity with unique token constraint.
 
 3) **Repository**
-- `RefreshTokenRepository`
-- buscar por token, listar por userId, deletar tokens antigos
+- Query by token, list by `userId`, and remove old tokens.
 
 4) **Service**
-- `register`: chama user-service e retorna tokens
-- `login`: valida credenciais, controla tentativas, gera tokens
-- `refresh`: valida refresh token e emite novo access
-- `logout`: revoga refresh token
-- `validate`: valida JWT
+- `register`: call user-service and return tokens
+- `login`: validate credentials, control failed attempts, issue tokens
+- `refresh`: validate refresh token and issue new access token
+- `logout`: revoke refresh token
+- `validate`: validate JWT
 
 5) **JWT**
-- Criação de `JwtService` (gerar/validar tokens)
-- Secret e expiração via config
+- Implement `JwtService` for token generation/validation.
+- Keep secret and expirations in configuration.
 
 6) **Controller**
-- Endpoints REST
-- DTOs de request/response
+- Expose REST endpoints with request/response DTOs.
 
-7) **Testes**
-- Unitários: validações de tokens, expiração, max tokens
+7) **Tests**
+- Unit tests for token validation, expiration, and token limits.
 
 ---
 
-## ⚙️ Detalhamento Técnico
+## Technical Details
 
 ### Stack
 - Java 21
-- Spring Boot 3.2+
+- Spring Boot
 - Spring Data JPA
 - PostgreSQL
 - Flyway
 - Spring Security (crypto)
-- JWT (biblioteca a definir)
+- JWT
 
-### Observações
-- Este serviço depende do **user-service** para login e register.
-- O API Gateway chamará `/auth/validate` para validar o JWT.
-
----
-
-> Este README deve evoluir junto com o serviço.
+### Notes
+- Depends on **user-service** for register/login user data.
+- API Gateway uses `/api/v1/auth/validate` before forwarding protected requests.

@@ -1,121 +1,121 @@
-# 👤 User Service - TechStore E-Commerce
+# User Service - TechStore E-Commerce
 
-> Microserviço responsável por cadastro, perfil e endereços de usuários.
+> Microservice responsible for user registration, profile management, and addresses.
 
 ---
 
-## 📌 Visão do P.O. (Regras de Negócio)
+## Product View (Business Rules)
 
-### Objetivo do serviço
-Garantir o gerenciamento completo de usuários e endereços, com validações fortes de dados e regras claras de segurança.
+### Service Goal
+Provide complete user and address management with strict data validation and clear security rules.
 
-### Entidades
+### Entities
 
-#### User (Usuário)
-| Campo | Tipo | Regras |
-|-------|------|--------|
-| `id` | UUID | Gerado automaticamente |
-| `email` | String | **Único**, formato válido |
-| `password` | String | Hash BCrypt (nunca texto puro) |
-| `name` | String | Obrigatório, 2-100 caracteres |
-| `cpf` | String | **Único**, válido pelo algoritmo de CPF |
-| `phone` | String | Formato: (XX) XXXXX-XXXX |
-| `role` | Enum | USER ou ADMIN (default: USER) |
+#### User
+| Field | Type | Rules |
+|-------|------|-------|
+| `id` | UUID | Auto-generated |
+| `email` | String | Unique, valid format |
+| `password` | String | BCrypt hash only (never plain text) |
+| `name` | String | Required, 2-100 chars |
+| `cpf` | String | Unique, must pass CPF algorithm |
+| `phone` | String | Valid phone format |
+| `role` | Enum | USER or ADMIN (default USER) |
 | `status` | Enum | ACTIVE, INACTIVE, BLOCKED |
-| `createdAt` | DateTime | Gerado automaticamente |
-| `updatedAt` | DateTime | Atualizado automaticamente |
+| `createdAt` | DateTime | Auto-generated |
+| `updatedAt` | DateTime | Auto-updated |
 
-#### Address (Endereço)
-| Campo | Tipo | Regras |
-|-------|------|--------|
-| `id` | UUID | Gerado automaticamente |
-| `userId` | UUID | FK para User |
-| `street` | String | Obrigatório |
-| `number` | String | Obrigatório |
-| `complement` | String | Opcional |
-| `neighborhood` | String | Obrigatório |
-| `city` | String | Obrigatório |
-| `state` | String | UF com 2 caracteres |
-| `zipCode` | String | Formato XXXXX-XXX |
-| `isDefault` | Boolean | Sempre deve existir exatamente 1 endereço padrão (se houver endereços) |
-
----
-
-## ✅ Regras de Negócio (Detalhadas)
-
-### Usuário
-- **Email e CPF são únicos** no sistema.
-- **CPF precisa ser válido** (algoritmo oficial).
-- **Senha nunca é armazenada em texto puro** (usar BCrypt).
-- **Soft delete**: usuário não é apagado, apenas fica `INACTIVE`.
-- Usuário **INACTIVE** ou **BLOCKED** não pode autenticar.
-
-### Endereços
-- Máximo de **5 endereços por usuário**.
-- Sempre deve existir **1 endereço padrão** (`isDefault = true`) quando existir pelo menos 1 endereço.
-- Ao criar o **primeiro endereço**, ele vira padrão automaticamente.
-- Se marcar um novo endereço como padrão, o anterior perde o status.
-- Se o endereço padrão for removido, o mais antigo restante vira padrão.
+#### Address
+| Field | Type | Rules |
+|-------|------|-------|
+| `id` | UUID | Auto-generated |
+| `userId` | UUID | FK to User |
+| `street` | String | Required |
+| `number` | String | Required |
+| `complement` | String | Optional |
+| `neighborhood` | String | Required |
+| `city` | String | Required |
+| `state` | String | 2-char state code |
+| `zipCode` | String | `XXXXX-XXX` format |
+| `isDefault` | Boolean | Exactly one default address when user has addresses |
 
 ---
 
-## 🔌 Endpoints (Regras do Cliente)
+## Detailed Rules
 
-### Usuários
-| Endpoint | Método | Descrição | Auth |
-|----------|--------|-----------|------|
-| `/api/v1/users` | POST | Criar usuário | Público |
-| `/api/v1/users/me` | GET | Meu perfil | USER |
-| `/api/v1/users/me` | PUT | Atualizar meu perfil | USER |
-| `/api/v1/users/{id}` | GET | Buscar por ID | ADMIN |
-| `/api/v1/users` | GET | Listar todos | ADMIN |
-| `/api/v1/users/{id}` | DELETE | Desativar usuário | ADMIN |
-| `/api/v1/users/email/{email}` | GET | Buscar por email (interno) | Interno |
+### User
+- Email and CPF must be unique.
+- CPF must be algorithmically valid.
+- Password is never stored in plain text (BCrypt).
+- Soft delete: user becomes `INACTIVE`.
+- `INACTIVE` or `BLOCKED` users cannot authenticate.
 
-### Endereços
-| Endpoint | Método | Descrição | Auth |
-|----------|--------|-----------|------|
-| `/api/v1/users/me/addresses` | GET | Listar endereços | USER |
-| `/api/v1/users/me/addresses` | POST | Adicionar endereço | USER |
-| `/api/v1/users/me/addresses/{id}` | PUT | Atualizar endereço | USER |
-| `/api/v1/users/me/addresses/{id}` | DELETE | Remover endereço | USER |
+### Address
+- Maximum **5 addresses** per user.
+- Must always keep **one default address** if there is at least one address.
+- First created address becomes default automatically.
+- Setting a new default unsets old default.
+- If default is removed, oldest remaining address becomes default.
 
 ---
 
-## 🧠 Fluxos (PO descrevendo comportamento esperado)
+## Endpoints
 
-### Criar Usuário
-1) Validar email, CPF e senha  
-2) Verificar unicidade de email e CPF  
-3) Hash da senha com BCrypt  
-4) Salvar usuário com `role=USER` e `status=ACTIVE`  
-5) Publicar evento `user.registered` (futuro Kafka)
+### Users
+| Endpoint | Method | Description | Auth |
+|----------|--------|-------------|------|
+| `/api/v1/users` | POST | Create user | Public |
+| `/api/v1/users/me` | GET | Get current profile | USER |
+| `/api/v1/users/me` | PATCH | Update current profile | USER |
+| `/api/v1/users/{id}` | GET | Get user by id | ADMIN |
+| `/api/v1/users` | GET | List users | ADMIN |
+| `/api/v1/users/{id}` | DELETE | Deactivate user | ADMIN |
 
-### Atualizar Usuário
-1) Usuário autenticado  
-2) Não permitir alterar `role` e `status` via endpoint público  
-3) Validar campos alterados  
-4) Salvar alterações
-
-### Adicionar Endereço
-1) Verificar limite de 5 endereços  
-2) Validar dados do endereço  
-3) Se for o primeiro endereço, vira padrão automaticamente  
-4) Se `isDefault=true`, remover padrão dos demais  
+### Addresses
+| Endpoint | Method | Description | Auth |
+|----------|--------|-------------|------|
+| `/api/v1/users/me/addresses` | GET | List addresses | USER |
+| `/api/v1/users/me/addresses/default` | GET | Get default address | USER |
+| `/api/v1/users/me/addresses/{id}` | GET | Get address by id | USER |
+| `/api/v1/users/me/addresses` | POST | Add address | USER |
+| `/api/v1/users/me/addresses/{id}` | PATCH | Update address | USER |
+| `/api/v1/users/me/addresses/{id}` | DELETE | Delete address | USER |
 
 ---
 
-## ⚙️ Detalhamento Técnico (Baseado no TechStore)
+## Main Flows
+
+### Create User
+1. Validate email, CPF, and password format.
+2. Check email/CPF uniqueness.
+3. Hash password using BCrypt.
+4. Save user with `role=USER` and `status=ACTIVE`.
+
+### Update User
+1. Require authenticated user.
+2. Do not allow public profile endpoint to change `role` or `status`.
+3. Validate changed fields.
+4. Save changes.
+
+### Add Address
+1. Validate max 5 addresses limit.
+2. Validate address fields.
+3. First address becomes default automatically.
+4. If `isDefault=true`, unset previous default.
+
+---
+
+## Technical Details
 
 ### Stack
 - Java 21
-- Spring Boot 3.2+
+- Spring Boot
 - Spring Data JPA
 - PostgreSQL
 - Flyway
-- Validações com Bean Validation
+- Bean Validation
 
-### Estrutura de Pacotes (Package by Layer)
+### Package Structure (Layered)
 ```
 com.br.userservice/
 ├── controller/
@@ -123,26 +123,19 @@ com.br.userservice/
 ├── repository/
 ├── model/
 ├── dto/
-│   ├── request/
-│   └── response/
 ├── mapper/
 ├── exception/
 └── config/
 ```
 
-### Padrões e Convenções
-- Controllers expõem apenas DTOs (nunca entidades).
-- Regras de negócio ficam no Service.
-- Repositórios apenas acesso ao banco.
-- Erros retornam no formato padrão do projeto (timestamp, status, message, details).
+### Conventions
+- Controllers expose DTOs only (no entities).
+- Business rules stay in service layer.
+- Repositories focus on persistence.
+- Error payloads follow project standard format.
 
 ---
 
-## 📌 Observações Importantes
-- Este serviço é **base para o auth-service**.
-- O auth-service irá consultar o user-service para login e cadastro.
-- API Gateway entrará após auth-service, para validar JWT e proteger rotas.
-
----
-
-> Este README deve ser atualizado conforme o serviço evoluir.
+## Notes
+- This service is a core dependency of `auth-service`.
+- Gateway validates JWT and injects identity headers for protected calls.

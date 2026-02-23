@@ -108,6 +108,12 @@ public class ProductController {
         return ResponseEntity.ok().body(productService.findById(id));
     }
 
+    @PostMapping("/list/all")
+    public ResponseEntity<List<ProductResponse>> getAllByListIds(@RequestBody List<UUID> ids) {
+        log.info("REST - Request to get all products by ids: {}", ids);
+        return ResponseEntity.status(HttpStatus.OK).body(productService.findAllByIds(ids));
+    }
+
     /**
      * Returns a product by slug.
      *

@@ -2,16 +2,21 @@
   "info": {
     "name": "TechStore Full Flow",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Full flow via API Gateway: auth, user, addresses, products"
+    "description": "Complete TechStore flow: auth, users, addresses, categories, products, inventory and orders"
   },
   "variable": [
-    {"key": "gatewayUrl", "value": "http://localhost:8080"},
-    {"key": "accessToken", "value": ""},
-    {"key": "refreshToken", "value": ""},
-    {"key": "userId", "value": ""},
-    {"key": "categoryId", "value": ""},
-    {"key": "productId", "value": ""},
-    {"key": "addressId", "value": ""}
+    { "key": "gatewayUrl", "value": "http://localhost:8080" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "userRole", "value": "USER" },
+    { "key": "categoryId", "value": "" },
+    { "key": "productId", "value": "" },
+    { "key": "productSlug", "value": "" },
+    { "key": "addressId", "value": "" },
+    { "key": "orderId", "value": "" },
+    { "key": "email", "value": "pedro@teste.com" },
+    { "key": "password", "value": "SenhaForte1" }
   ],
   "item": [
     {
@@ -21,11 +26,11 @@
           "name": "Register",
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{gatewayUrl}}/api/v1/auth/register",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"pedro@teste.com\",\n  \"cpf\": \"14317084619\",\n  \"phone\": \"11999999999\",\n  \"name\": \"Pedro\",\n  \"password\": \"SenhaForte1\"\n}"
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"cpf\": \"14317084619\",\n  \"phone\": \"11999999999\",\n  \"name\": \"Pedro\",\n  \"password\": \"{{password}}\"\n}"
             }
           },
           "event": [
@@ -34,9 +39,11 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "var json = pm.response.json();",
-                  "if (json && json.accessToken) pm.environment.set('accessToken', json.accessToken);",
-                  "if (json && json.refreshToken) pm.environment.set('refreshToken', json.refreshToken);"
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.accessToken) pm.environment.set('accessToken', json.accessToken);",
+                  "  if (json.refreshToken) pm.environment.set('refreshToken', json.refreshToken);",
+                  "}"
                 ]
               }
             }
@@ -46,11 +53,11 @@
           "name": "Login",
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{gatewayUrl}}/api/v1/auth/login",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"pedro@teste.com\",\n  \"password\": \"SenhaForte1\"\n}"
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
             }
           },
           "event": [
@@ -59,13 +66,39 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "var json = pm.response.json();",
-                  "if (json && json.accessToken) pm.environment.set('accessToken', json.accessToken);",
-                  "if (json && json.refreshToken) pm.environment.set('refreshToken', json.refreshToken);"
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.accessToken) pm.environment.set('accessToken', json.accessToken);",
+                  "  if (json.refreshToken) pm.environment.set('refreshToken', json.refreshToken);",
+                  "}"
                 ]
               }
             }
           ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{gatewayUrl}}/api/v1/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{gatewayUrl}}/api/v1/auth/logout",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
         },
         {
           "name": "Validate Token",
@@ -83,7 +116,7 @@
           "name": "Me",
           "request": {
             "method": "GET",
-            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
             "url": "{{gatewayUrl}}/api/v1/users/me"
           },
           "event": [
@@ -92,8 +125,11 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "var json = pm.response.json();",
-                  "if (json && json.id) pm.environment.set('userId', json.id);"
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.id) pm.environment.set('userId', json.id);",
+                  "  if (json.role) pm.environment.set('userRole', json.role);",
+                  "}"
                 ]
               }
             }
@@ -104,8 +140,8 @@
           "request": {
             "method": "PATCH",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
-              {"key": "Content-Type", "value": "application/json"}
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "url": "{{gatewayUrl}}/api/v1/users",
             "body": {
@@ -118,7 +154,7 @@
           "name": "List Users (Admin)",
           "request": {
             "method": "GET",
-            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
             "url": "{{gatewayUrl}}/api/v1/users?page=0&size=10"
           }
         },
@@ -126,8 +162,24 @@
           "name": "Get User By Id (Admin)",
           "request": {
             "method": "GET",
-            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
             "url": "{{gatewayUrl}}/api/v1/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Deactivate User (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{gatewayUrl}}/api/v1/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Block User (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{gatewayUrl}}/api/v1/users/{{userId}}/deactivate"
           }
         }
       ]
@@ -139,23 +191,67 @@
           "name": "List My Addresses",
           "request": {
             "method": "GET",
-            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
             "url": "{{gatewayUrl}}/api/v1/users/me/addresses"
           }
+        },
+        {
+          "name": "Get Default Address",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{gatewayUrl}}/api/v1/users/me/addresses/default"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.id) pm.environment.set('addressId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Add Address",
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
-              {"key": "Content-Type", "value": "application/json"}
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "url": "{{gatewayUrl}}/api/v1/users/me/addresses",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"street\": \"Rua A\",\n  \"number\": \"123\",\n  \"complement\": \"Apto 10\",\n  \"neighborhood\": \"Centro\",\n  \"city\": \"Sao Paulo\",\n  \"state\": \"SP\",\n  \"ziCode\": \"01000-000\",\n  \"isDefault\": true\n}"
             }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.id) pm.environment.set('addressId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Address By Id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{gatewayUrl}}/api/v1/users/me/addresses/{{addressId}}"
           }
         },
         {
@@ -163,8 +259,8 @@
           "request": {
             "method": "PATCH",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
-              {"key": "Content-Type", "value": "application/json"}
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "url": "{{gatewayUrl}}/api/v1/users/me/addresses/{{addressId}}",
             "body": {
@@ -177,8 +273,79 @@
           "name": "Delete Address",
           "request": {
             "method": "DELETE",
-            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
             "url": "{{gatewayUrl}}/api/v1/users/me/addresses/{{addressId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "List Categories (Public)",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/api/v1/categories"
+          }
+        },
+        {
+          "name": "Get Category By Id (Public)",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/api/v1/categories/{{categoryId}}"
+          }
+        },
+        {
+          "name": "Create Category (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{gatewayUrl}}/api/v1/categories",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Eletronicos\",\n  \"description\": \"Categoria principal\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.id) pm.environment.set('categoryId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Category (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{gatewayUrl}}/api/v1/categories/{{categoryId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Categoria principal atualizada\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Deactivate Category (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{gatewayUrl}}/api/v1/categories/{{categoryId}}"
           }
         }
       ]
@@ -190,21 +357,303 @@
           "name": "List Products (Public)",
           "request": {
             "method": "GET",
-            "url": "{{gatewayUrl}}/api/v1/products"
+            "url": "{{gatewayUrl}}/api/v1/products?page=0&size=20"
           }
         },
         {
-          "name": "Create Product (Protected)",
+          "name": "Get Product By Id (Public)",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/api/v1/products/{{productId}}"
+          }
+        },
+        {
+          "name": "Get Product By Slug (Public)",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/api/v1/products/slug/{{productSlug}}"
+          }
+        },
+        {
+          "name": "Search Products (Public)",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/api/v1/products/search?q=teste&page=0&size=20"
+          }
+        },
+        {
+          "name": "List Products By IDs (Internal)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{gatewayUrl}}/api/v1/products/list/all",
+            "body": {
+              "mode": "raw",
+              "raw": "[\"{{productId}}\"]"
+            }
+          }
+        },
+        {
+          "name": "Create Product (Admin)",
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
-              {"key": "Content-Type", "value": "application/json"}
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "url": "{{gatewayUrl}}/api/v1/products",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sku\": \"TEST-PRD-001\",\n  \"name\": \"Produto Teste\",\n  \"description\": \"Produto para testes\",\n  \"brand\": \"Marca\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"price\": 10.0\n}"
+              "raw": "{\n  \"sku\": \"TEST-PRD-001\",\n  \"name\": \"Produto Teste\",\n  \"description\": \"Produto para testes\",\n  \"brand\": \"Marca\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"price\": 10.0,\n  \"compareAtPrice\": 12.0\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.id) pm.environment.set('productId', json.id);",
+                  "  if (json.slug) pm.environment.set('productSlug', json.slug);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Product (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{gatewayUrl}}/api/v1/products/{{productId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Produto Teste Atualizado\",\n  \"price\": 11.5\n}"
+            }
+          }
+        },
+        {
+          "name": "Add Images (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{gatewayUrl}}/api/v1/products/{{productId}}/images",
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"url\": \"https://example.com/image-1.jpg\",\n    \"altText\": \"Main image\",\n    \"position\": 1,\n    \"isMain\": true\n  }\n]"
+            }
+          }
+        },
+        {
+          "name": "Delete Image (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{gatewayUrl}}/api/v1/products/{{productId}}/images/{{imageId}}"
+          }
+        },
+        {
+          "name": "Add Attributes (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{gatewayUrl}}/api/v1/products/{{productId}}/attributes",
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"name\": \"color\",\n    \"value\": \"black\"\n  }\n]"
+            }
+          }
+        },
+        {
+          "name": "Inactivate Product (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{gatewayUrl}}/api/v1/products/{{productId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "item": [
+        {
+          "name": "Get By ProductId (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{gatewayUrl}}/api/v1/inventory/{{productId}}"
+          }
+        },
+        {
+          "name": "Get By ProductId Internal",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/api/v1/inventory/internal/{{productId}}"
+          }
+        },
+        {
+          "name": "Update Inventory (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{gatewayUrl}}/api/v1/inventory/{{productId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 100,\n  \"minStockAlert\": 10\n}"
+            }
+          }
+        },
+        {
+          "name": "Reserve Stock (Internal)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{gatewayUrl}}/api/v1/inventory/reserve",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"items\": [\n    { \"productId\": \"{{productId}}\", \"quantity\": 1 }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Release Stock (Internal)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{gatewayUrl}}/api/v1/inventory/release",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Confirm Stock (Internal)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{gatewayUrl}}/api/v1/inventory/confirm",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Low Stock (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{gatewayUrl}}/api/v1/inventory/low-stock"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{gatewayUrl}}/api/v1/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"addressId\": \"{{addressId}}\",\n  \"notes\": \"Please deliver in business hours\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId}}\",\n      \"quantity\": 1\n    }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.id) pm.environment.set('orderId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List My Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{gatewayUrl}}/api/v1/orders?page=0&size=20"
+          }
+        },
+        {
+          "name": "Get Order By Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{gatewayUrl}}/api/v1/orders/{{orderId}}"
+          }
+        },
+        {
+          "name": "Cancel Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{gatewayUrl}}/api/v1/orders/{{orderId}}/cancel",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"User requested cancellation\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List All Orders (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{gatewayUrl}}/api/v1/orders/admin?page=0&size=20"
+          }
+        },
+        {
+          "name": "Update Order Status (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{gatewayUrl}}/api/v1/orders/{{orderId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PAYMENT_CONFIRMED\",\n  \"notes\": \"Payment approved by admin\"\n}"
             }
           }
         }
